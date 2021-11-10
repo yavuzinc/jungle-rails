@@ -1,3 +1,4 @@
+<% if enhanced_cart.length > 0 %>
 <section class="cart-show">
 
   <header class="page-header">
@@ -52,3 +53,10 @@
   </div>
 
 </section>
+<% else %>
+<div class="alert">
+  <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+  Your Cart is EMPTY!
+  </br><a href="/">Go back to homepage</a>
+</div>
+<% end %>
