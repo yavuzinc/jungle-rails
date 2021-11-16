@@ -1,62 +1,159 @@
 require 'rails_helper'
 
-RSpec.describe Product, type: :model do
+RSpec.describe User, type: :model do
+
   describe 'Validations' do
-  
     it "is valid" do
-      @product = Product.new
-      @cat = Category.new
-      @cat.name = 'Test'
-      @product.name = 'Test' # invalid state
-      @product.price_cents = 12311
-      @product.quantity = 3
-      @product.category = @cat
-      expect(@product.valid?).to be true
+      user = User.new(
+        first_name: 'first_name',
+        last_name: 'last_name',
+        email: 'test2@test.com',
+        password: 'password',
+        password_confirmation: 'password'
+      )
+      expect(user).to be_valid
     end
 
-    it "name presence" do
-      @product = Product.new
-      @product.name = nil # invalid state
-      @product.valid?
-      expect(@product.errors[:name]).to  include("can't be blank")
+    it "email is missing" do
+      user = User.new(email: nil)
+      expect(user).to be_invalid
+      expect(user.errors[:email]).to include("can't be blank")
   
-      @product.name = 'test' # valid state
-      @product.valid? 
-      expect(@product.errors[:name]).not_to  include("can't be blank")
+      user.email = 'test@test.com' # valid state
+      user.valid?
+      expect(user.errors[:email]).not_to include("can't be blank")
     end
 
-    it "price_cents presence" do
-      @product = Product.new
-      @product.price_cents = nil # invalid state
-      @product.valid?
-      expect(@product.errors[:price_cents]).to  include("is not a number")
+    it "first name is missing" do
+      user = User.new(first_name: nil)
+      expect(user).to be_invalid
+      expect(user.errors[:first_name]).to include("can't be blank")
   
-      @product.price_cents = 12311 # valid state
-      @product.valid? 
-      expect(@product.errors[:price_cents]).not_to  include("can't be blank")
+      user.first_name = 'first_name' # valid state
+      user.valid? 
+      expect(user.errors[:first_name]).not_to include("can't be blank")
     end
-  
-    it "quantity" do
-      @product = Product.new
-      @product.quantity = nil # invalid state
-      @product.valid?
-      expect(@product.errors[:quantity]).to  include("can't be blank")
-  
-      @product.quantity = 3 # valid state
-      @product.valid? 
-      expect(@product.errors[:quantity]).not_to  include("can't be blank")
-    end
-  
-    it "has category_id" do
-      @cat = Category.new
-      @product = Product.new
-      @product.category = nil # invalid state
-      @product.valid?
-      expect(@product.errors[:category]).to  include("can't be blank")
 
-      @product.category = @cat # valid state
-      @product.valid? 
-      expect(@product.errors[:category]).not_to  include("can't be blank")
+    it "last name is missing" do
+      user = User.new(last_name: nil)
+      expect(user).to be_invalid
+      expect(user.errors[:last_name]).to include("can't be blank")
+  
+      user.last_name = 'last_name' # valid state
+      user.valid? 
+      expect(user.errors[:last_name]).not_to include("can't be blank")
+    end
+
+    it "password don't match" do
+      user = User.new(
+        first_name: 'first_name',
+        last_name: 'last_name',
+        email: 'test2@test.com',
+        password: 'password',
+        password_confirmation: 'pass'
+      )
+      user.valid?
+      expect(user.errors[:password_confirmation]).to be_present
+    end
+
+    it 'email must be unique' do
+      user = User.new
+      user.first_name = 'first_name'
+      user.last_name = 'last_name'
+      user.email = 'test@test.com'
+      user.password = 'password'
+      user.password_confirmation = 'password'
+
+      user.save
+    
+      u = User.new
+      u.first_name = 'first_name'
+      u.last_name = 'last_name'
+      u.email = 'test@test.com'
+      u.password = 'password'
+      u.password_confirmation = 'password'
+      u.save
+    
+      expect(u.errors[:email].first).to eq('has already been taken')
+    end
+
+    it 'password length less than 5 characters is invalid' do
+      user = User.new
+      user.first_name = 'first_name'
+      user.last_name = 'last_name'
+      user.email = 'test@test.com'
+      user.password = '1234'
+      user.password_confirmation = '1234'
+      expect(user).to be_invalid
+    end
+
+    it 'password length must be at-least 5 characters' do
+      user = User.new
+      user.first_name = 'first_name'
+      user.last_name = 'last_name'
+      user.email = 'test@test.com'
+      user.password = '12345'
+      user.password_confirmation = '12345'
+      expect(user).to be_valid
     end
   end
+  
+  describe '.authenticate_with_credentials' do
+    it 'should pass with valid credentials' do
+      user = User.new(
+        first_name: 'first_name',
+        last_name: 'last_name',
+        email: 'test@test.com',
+        password: 'password',
+        password_confirmation: 'password'
+      )
+      user.save
+
+      user = User.authenticate_with_credentials('test@test.com', 'password')
+      expect(user).not_to be(nil)
+    end
+
+    it 'should not pass with invalid credentials' do
+      user = User.new(
+        first_name: 'first_name',
+        last_name: 'last_name',
+        email: 'test@test.com',
+        password: 'password',
+        password_confirmation: 'password'
+      )
+      user.save
+
+      user = User.authenticate_with_credentials('test@test.com', 'pass')
+      expect(user).to be(nil)
+    end
+
+    it 'should pass even with spaces present in email' do
+      user = User.new(
+        first_name: 'first_name',
+        last_name: 'last_name',
+        email: 'test@test.com',
+        password: 'password',
+        password_confirmation: 'password'
+      )
+      user.save
+
+      user = User.authenticate_with_credentials('  test@test.com  ', 'password')
+      expect(user).not_to be(nil)
+    end
+
+    it 'should pass even with caps present in email' do
+      user = User.new(
+        first_name: 'first_name',
+        last_name: 'last_name',
+        email: 'test@test.com',
+        password: 'password',
+        password_confirmation: 'password'
+      )
+      user.save
+
+      user = User.authenticate_with_credentials('tesT@tEst.com', 'password')
+      expect(user).not_to be(nil)
+    end
+  end
+
 end
