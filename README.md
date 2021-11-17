@@ -6,7 +6,7 @@ A mini e-commerce application built with Rails 4.2 for purposes of teaching Rail
 
 Landing page, with an overview of all available products.
 
-!["landing page"]()
+!["landing page"](https://github.com/yavuzinc/jungle-rails/blob/master/docs/homepage.png)
 
 ## Additional Steps for Apple M1 Machines
 
